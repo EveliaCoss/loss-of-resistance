@@ -16,6 +16,43 @@ library(tidyverse)
 library(reshape2)
 
 #---- GC_long_to_growthrates() -------
+#' Calculate Growth Rates from Microplate Data
+#'
+#' This function calculates growth rates from microplate data using a logistic growth model.
+#' It fits a logistic curve to each well's optical density (OD) over time and extracts the growth rate.
+#'
+#' @param GC_long A data frame containing microplate data. It must have columns `Well`, `Time`, `OD`, and `Treatment`.
+#' @param lower A numeric vector specifying the lower bounds for the parameters of the logistic growth model.
+#' @param upper A numeric vector specifying the upper bounds for the parameters of the logistic growth model.
+#' @param p A numeric vector specifying the initial parameter values for the logistic growth model.
+#'
+#' @return A data frame with columns:
+#' \item{well}{The identifier of the well.}
+#' \item{treatment}{The treatment associated with the well.}
+#' \item{r}{The growth rate obtained from the fitted logistic model.}
+#'
+#' @import growthrates
+#' @import lmerTest
+#'
+#' @export
+#'
+#' @examples
+#' # Example data
+#' GC_long <- data.frame(
+#'   Well = rep(c("A1", "A2"), each = 10),
+#'   Time = rep(1:10, 2),
+#'   OD = runif(20),
+#'   Treatment = rep(c("Control", "Treatment"), each = 10)
+#' )
+#'
+#' # Parameters for the logistic model
+#' lower <- c(y0 = 0.000001, mumax = 0, K = 0)
+#' upper <- c(y0 = 0.05, mumax = 5, K = 1.5)
+#' p <- c(y0 = 0.01, mumax = 0.2, K = 0.1)
+#'
+#' # Calculate growth rates
+#' growth_rates <- GC_long_to_growthrates(GC_long, lower, upper, p)
+#' print(growth_rates)
 
 GC_long_to_growthrates<-function(GC_long,lower,upper,p){
   ###initialize data frame
