@@ -281,13 +281,11 @@ top_genes<-names(tail(sort(table(top_genes_in_study[top_genes_in_study$hits>0,"d
 breseq_gene_analysis<-data.frame(table(breseq_NS_noP0[breseq_NS_noP0$Passage=="P2","description"],breseq_NS_noP0[breseq_NS_noP0$Passage=="P2","Line"]))
 colnames(breseq_gene_analysis)=c("gene","Line","hits")
 
-
-
-#The objects rfbA, glycosyl, and glycoside are not defined in the R environment.
-#Define the vectors or lists of values corresponding to each resistance gene
-#rfbA <- c("VCM4", "MS2")  # Asocia los códigos relevantes con rfbA
-#glycosyl <- c("VCM19")  # Asocia los códigos relevantes con glycosyl
-#glycoside <- c("SNK7", "FMS11")  # Asocia los códigos relevantes con glycoside
+#The objects rfbA, glycosyl and glycoside are not defined in the R environment.
+#Defines the vectors or lists of values corresponding to each resistance gene.
+#rfbA <- c(“VCM4”, “MS2”) # Associates relevant codes with rfbA.
+#glycosyl <- c(“VCM19”) # Associates relevant codes with glycosyl
+#glycoside <- c(“SNK7”, “FMS11”) # Associates relevant codes with glycoside
 
 
 ### Annotate each population according to its resistance gene
@@ -319,7 +317,7 @@ ggplot(breseq_gene_props, aes(top_gene, res_gene, fill = percent_pops * 100)) +
   theme_classic(base_size = 14) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   scale_fill_viridis(name = "Populations 
-with mutation (%)") +  # Cambia el nombre de la escala
+with mutation (%)") + # Change scale name
   ylab("") +
   xlab("")
 
