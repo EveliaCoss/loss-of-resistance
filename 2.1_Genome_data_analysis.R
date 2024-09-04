@@ -297,7 +297,9 @@ breseq_gene_analysis<-breseq_gene_analysis[!is.na(breseq_gene_analysis$res_gene)
 ### Calculate percent of populations with each resistance gene (rfbA, PSPTO_4988, or PSPTO_4991) that mutated each of the other gene
 breseq_gene_props<-data.frame(matrix(nrow=0,ncol=3))
 l<-list(rfbA,glycosyl,glycoside)
-names(l)=c("rfbA mutants","PSPTO_4988 mutants","PSPTO_4991 mutants")
+names(l)=c("rfbA mutants","PSPTO_4988
+mutants","PSPTO_4991
+mutants")
 for (gene in top_genes){
   for (j in seq(1,3)){
     res_gene<-l[[j]]
