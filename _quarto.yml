@@ -1,0 +1,54 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+
+  navbar:
+    title: "<img src='img/logo.png' alt='Logo' class='logo'>"
+    background: "white"
+    foreground: "#a7a9ac"
+    
+    
+    tools:
+      - icon: twitter
+        href: https://twitter.com
+      - icon: github
+        menu:
+          - text: Source Code
+            url:  https://code.com
+            
+  sidebar:
+    style: "floating"
+    foreground: "#a7a9ac"
+    search: true
+    alignment: right
+    contents:
+      - section: "Introducción"
+        contents:
+          - index.qmd
+          - tema1.qmd
+          - tema2.qmd
+      - section: "Operaciones"
+        contents:
+          - tema3.qmd
+          - tema4.qmd
+          - tema5.qmd
+          - tema6.qmd
+          - tema7.qmd
+
+
+format:
+  html:
+    theme: flatly
+    css: styles.css
+    toc: true
+    code-wrap: true
+    grid: 
+      body-width: 1000px 
+  
+engine: knitr
+knitr:
+  opts_chunk: 
+    R.options:
+      width: 120
