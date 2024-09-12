@@ -14,9 +14,9 @@
 
 
 # --- packages ----
-#' @import readxl
-#' @import ggplot2
-#' @import viridis
+#' @import readxl : This package is used to read Excel files (.xls and .xlsx).
+#' @import ggplot2: This is one of the most popular packages in R for data visualization. You can create basic plots (such as histograms and bar charts) as well as more complex visualizations (like heatmaps and violin plots).
+#' @import viridis : This package provides color palettes for plots in R. The viridis palettes are particularly useful in visualizations like heatmaps or scatter plots where color differentiation is important.
 
 library(readxl)
 library(ggplot2)
