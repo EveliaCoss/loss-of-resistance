@@ -1,3 +1,0 @@
----
-title: "Buenas prácticas en la bioinformática"
----
