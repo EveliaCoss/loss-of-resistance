@@ -1,6 +1,0 @@
----
-title: "Formato de archivos"
-format: 
-  html:
-    page-layout: full 
----
