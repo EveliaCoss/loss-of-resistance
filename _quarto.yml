@@ -5,7 +5,7 @@ project:
 website:
 
   navbar:
-    title: "<img src='img/logo.png' alt='Logo' class='logo'>"
+    title: "<img src='img/logo.png' alt='Logo' class='logo' style='height: 50px; width: auto;'>"
     background: "white"
     foreground: "#a7a9ac"
     
@@ -29,13 +29,11 @@ website:
           - index.qmd
           - tema1.qmd
           - tema2.qmd
-      - section: "Operaciones"
-        contents:
           - tema3.qmd
+      - section: "Acerca de las funciones y figuras del artículo"
+        contents:
           - tema4.qmd
           - tema5.qmd
-          - tema6.qmd
-          - tema7.qmd
 
 
 format:
