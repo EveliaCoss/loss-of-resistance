@@ -3,10 +3,26 @@
 # Feb 1, 2022
 # Modified: Evelia Coss (03/Sep/2024)
 
+#TODO: Este parrafo no se entiende, no encuentro la función fit_growthmodel() en otras partes del codigo. 
+
 ## This function uses the fit_growthmodel() function of the growthrates package to calculate growth rates from microplate data
 ## It takes data in the following form: each row is the measurement of a single well at a single time point, with additional columns "Treatment" and "OD".
 ## A logistic curve is fit to each well separately using the OD over time
 ## I used the following parameters: lower=c(y0=0.000001,mumax=0,K=0),upper=c(y0=0.05,mumax=5,K=1.5)),p=c(y0=0.01,mumax=0.2,K=0.1)
+
+#TODO: Creo que faltaría la descripción del script.
+
+#TODO: Propuesta de incluir un ambiente de paqueterías
+
+# To enhance reproducibility we set up an environment for the following project.
+# --- set environment ---
+library(renv)
+
+# This command initializes the R environment it should only be used once. 
+# renv::init()
+
+# To ensure you have the proper versions and packages needed for this project run the following command.
+renv::restore()
 
 # --- packages ----
 library(growthrates)
@@ -14,6 +30,7 @@ library(lmerTest)
 library(readxl)
 library(tidyverse)
 library(reshape2)
+
 
 #---- GC_long_to_growthrates() -------
 #' Calculate Growth Rates from Microplate Data
@@ -71,12 +88,17 @@ GC_long_to_growthrates<-function(GC_long,lower,upper,p){
 
 ## ----- Figure 1: Resistance is costly -------
 
+#TODO: Una sugerencia sería crear un proyecto de R para que se ajusten automaticamente el working directory
+#TODO: También, en el espiritu de la reproducibilidad, hay un paquete que se llama renv que guarda un ambiente con los paquetes que se utilizan dentro del proyecto (https://rstudio.github.io/renv/articles/renv.html). Segun entiendo empiezas con un ambiente vacío y jala los paquetes que ya tienes instalados al ambiente pero guarda todas las versiones (incluso me parece que la de R también).
+
 ### Read in "Costs_of_Res.xlsx" as costs_of_res
 costs_of_res <- read_excel("Costs_of_Res.xlsx")
+
 ### Calculate fitted values controlling for phage resistance and plate layout
 ### Express fitted values as a percentage of wild-type fitness
 costs_of_res$fitted<-fitted.values(lm(r~(Population=="ancDC3000")+Column+Plate,costs_of_res))
 costs_of_res$fitted_percWT<-costs_of_res$fitted/mean(unlist(costs_of_res[costs_of_res$Population=="ancDC3000","fitted"]))*100
+
 ### Reorder the isolates by resistance gene and growth rate
 costs_of_res<-costs_of_res[order(costs_of_res$Gene,-costs_of_res$r),]
 costs_of_res[costs_of_res$Population=="MS15","Gene"]="Z" # place the isolate with no detected genetic differences on the right-hand side of the graph
@@ -92,15 +114,40 @@ t.test(x = costs_agg$fitted_percWT,mu = 100,alternative = "less")
 anova(lm(fitted_percWT~Gene,costs_agg[costs_agg$Population!="MS15",]))
 
 ### Code for Figure 1B
-ggplot(costs_of_res[costs_of_res$Population!="ancDC3000",])+stat_summary(aes(reorder(Population,-fitted_percWT),fitted_percWT,group=Population,fill=Gene),geom="pointrange",shape=21,size=0.8)+theme_classic(base_size=18)+theme(axis.title.x=element_blank(),axis.text.x=element_blank(),axis.ticks.x=element_blank())+guides(fill=F)+facet_grid(~paste(Gene,Annotation,sep="\n"),scales="free_x",space="free_x")+theme(strip.background = element_blank(),strip.placement="outside")+scale_fill_brewer(palette="Dark2")+ylab("Fitness (% of wild-type)")+geom_hline(yintercept=100,linetype="dashed")
+
+#TODO: Los titulos no estan bien puestos... no me sale que estén en la parte de abajo y además estén afuera. Encontré este paquete que expande las caracteristicas de facet_grid y facet_wrap con el que posiblemente podríamos hacerlo https://cran.r-project.org/web/packages/ggh4x/vignettes/Facets.html
+
+#TODO: faltan los titulos y los ticks del eje x en un angulo de 90.
+
+ggplot(costs_of_res[costs_of_res$Population!="ancDC3000",])+
+  stat_summary(aes(reorder(Population,-fitted_percWT),fitted_percWT,group=Population,fill=Gene),geom="pointrange",shape=21,size=0.8)+
+  geom_hline(yintercept=100,linetype="dashed")+
+  scale_fill_brewer(palette="Dark2")+
+  guides(fill=F)+
+  ylab("Fitness (% of wild-type)")+
+  facet_grid(~paste(Gene,Annotation,sep="\n"),
+             scales="free_x",
+             space="free_x", 
+             #strip.position = "bottom"
+             )+
+  theme_classic(base_size=18)+
+  theme(axis.title.x=element_blank(),
+                axis.text.x=element_text(angle = 90),
+                #axis.ticks.x=element_blank(),
+        strip.background = element_blank(),
+        strip.placement = "outside")
 
 
 ## ------- Figure 2A: Growth over time ---------
+
 ### Read in "Fitness_over_Time.xlsx" as fitness_over_time
 fitness_over_time <- read_excel("Fitness_over_Time.xlsx")
+
 ### Calculate fitted values controlling for phage resistance, passage, and plate layout
 fitness_over_time$fitted<-fitted.values(lm(r~Passage*Type+Column,fitness_over_time))
+
 ### Express fitted values as a percentage of wild-type fitness
+
 for (passage in seq(0,12,2)){
   anc_means<-mean(unlist(fitness_over_time[fitness_over_time$Passage==passage & fitness_over_time$Type=="ANC","fitted"]))
   fitness_over_time[fitness_over_time$Passage==passage & fitness_over_time$Type=="PR","fitted_percWT"]<-100*fitness_over_time[fitness_over_time$Passage==passage & fitness_over_time$Type=="PR","fitted"]/anc_means
