@@ -468,9 +468,6 @@ for (gene in top_genes) {
 colnames(breseq_gene_props)
 colnames(breseq_gene_props) <- c("top_gene", "res_gene", "percent_pops")
 breseq_gene_props$res_gene <- factor(breseq_gene_props$res_gene, levels = c("PSPTO_4991 mutants","PSPTO_4988 mutants","rfbA mutants"))
-
-# Assign column names
-colnames(breseq_gene_props) <- c("top_gene", "res_gene", "percent_pops")
 breseq_gene_props$percent_pops <- as.numeric(breseq_gene_props$percent_pops)
 breseq_gene_props[breseq_gene_props$percent_pops == 0, "percent_pops"] <- 10^-4
 
