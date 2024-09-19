@@ -1,6 +1,6 @@
-# Analysis of bacterial genomes evolved in the absence of phage
-# Reena Debray
-# Feb 1, 2022
+# Title: Analysis of bacterial genomes evolved in the absence of phage
+# Author: Reena Debray
+# Date: Feb 1, 2022
 # Modified: Amairani Cancino Bello (04/Sep/2024)
 
 
