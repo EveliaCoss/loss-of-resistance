@@ -14,23 +14,21 @@
 
 
 # --- packages ----
-#' @import readxl : This package is used to read Excel files (.xls and .xlsx).
-#' @import ggplot2: This is one of the most popular packages in R for data visualization. You can create basic plots (such as histograms and bar charts) as well as more complex visualizations (like heatmaps and violin plots).
-#' @import viridis : This package provides color palettes for plots in R. The viridis palettes are particularly useful in visualizations like heatmaps or scatter plots where color differentiation is important.
+# readxl : This package is used to read Excel files (.xls and .xlsx).
+# ggplot2: This is one of the most popular packages in R for data visualization. You can create basic plots (such as histograms and bar charts) as well as more complex visualizations (like heatmaps and violin plots).
+# viridis : This package provides color palettes for plots in R. The viridis palettes are particularly useful in visualizations like heatmaps or scatter plots where color differentiation is important.
 
-install.packages("viridis")
+
 library(readxl)
 library(ggplot2)
 library(viridis)
 
 
 #--- Specify the full directory path ----
-#' @title Specify the Directory Path
-#' @description Sets the directory path containing the mutation tables.
-#' @param breseq A string specifying the directory path.
-#' @usage breseq <- "C:/Users/amair/Desktop/R ladies/Reprohack/Sesión 2/loss-of-resistance-main/loss-of-resistance-main/Mutation tables"
+#TODO: Usando un proyecto se soluciona
+
 #Directory containing the mutation tables.
-breseq <- "C:/Users/amair/Desktop/R ladies/Reprohack/Sesión 2/loss-of-resistance-main/loss-of-resistance-main/Mutation tables"
+# breseq <- "C:/Users/amair/Desktop/R ladies/Reprohack/Sesión 2/loss-of-resistance-main/loss-of-resistance-main/Mutation tables"
 
 #--- Generate Annotared Gene Matrix---- 
 #' @title Generate Annotated Gene Matrix
@@ -57,15 +55,16 @@ gene_matrix_annotated<-function(breseq,gene_list,sample_list,AF_min){
 
 
 #---Read and filter breseq output----
-#' @title Read and Filter breseq Output
-#' @description Reads the breseq mutation data files, formats the data frame, and filters the mutation data based on various criteria.
-#' @return A data frame containing filtered mutation data.
-#' @export
+
+# Reads the breseq mutation data files, formats the data frame, and filters the mutation data based on various criteria.
+# Output: A data frame containing filtered mutation data.
 
 breseq_annotated<-data.frame()
-filenames=list.files("C:/Users/amair/Desktop/R ladies/Reprohack/Sesión 2/loss-of-resistance-main/loss-of-resistance-main/Mutation tables")
+
+filenames=list.files("Mutation tables", full.names = T)
+
 for (file in filenames){
-  ann <- data.frame(read_excel(paste("C:/Users/amair/Desktop/R ladies/Reprohack/Sesión 2/loss-of-resistance-main/loss-of-resistance-main/Mutation tables", file, sep="/")))
+  ann <- data.frame(read_excel(file))
   ann$Line<-unlist(strsplit(file,split="_"))[1]
   ann$Passage<-unlist(strsplit(file,split="_"))[2]
   ann$Sample<-paste(ann$Line,ann$Passage,sep="_")
@@ -75,20 +74,19 @@ for (file in filenames){
 dim(breseq_annotated)
 
 #--- Remove unassigned evidence----
-#' @title Remove Unassigned Evidence
-#' @description Filters out unassigned evidence from the breseq mutation data.
-#' @param breseq_annotated Data frame containing mutation data.
-#' @return Filtered data frame without unassigned evidence.
-#' @export
+# Filters out unassigned evidence from the breseq mutation data.
+# breseq_annotated Data frame containing mutation data.
+# Output Filtered data frame without unassigned evidence.
+
 
 breseq_annotated<-breseq_annotated[!breseq_annotated$evidence%in%c(NA,"Unassigned missing coverage evidence","*","Unassigned new junction evidence","?"),]
+
 dim(breseq_annotated)
 
-# --- Function: Remove Sites Differing from Reference ----
-#' @title Remove Sites Differing from Reference
-#' @description Removes any mutation sites that differ from the reference in the ANCDC3000 line.
-#' @param breseq_annotated Data frame. Contains the annotated breseq data.
-#' @return Data frame without sites differing from the reference in ANCDC3000.
+# --- Remove Sites Differing from Reference ----
+# Removes any mutation sites that differ from the reference in the ANCDC3000 line.
+# breseq_annotated Data frame. Contains the annotated breseq data.
+# Output Data frame without sites differing from the reference in ANCDC3000.
 
 ## Remove any sites that differ from reference in ANCDC3000
 ANCDC3000_sites<-breseq_annotated[breseq_annotated$Line=="ANCDC3000","position"]
@@ -96,11 +94,7 @@ breseq_annotated<-breseq_annotated[!breseq_annotated$position%in%ANCDC3000_sites
 dim(breseq_annotated)
 
 
-# --- Function: Remove Fixed Sites ----
-#' @title Remove Fixed Sites
-#' @description Removes sites that are fixed in every single line.
-#' @param breseq_annotated Data frame. Contains the annotated breseq data.
-#' @return Data frame without fixed mutation sites.
+# --- Remove Fixed Sites ----
 
 ## Remove sites that are fixed in every single line
 tab<-data.frame(table(breseq_annotated[breseq_annotated$freq==1,"Line"],breseq_annotated[breseq_annotated$freq==1,"position"])) #table of fixed sites
@@ -110,11 +104,7 @@ sites_to_remove<-as.character(mut_tab[mut_tab$Freq==length(unique(breseq_annotat
 breseq_annotated<-breseq_annotated[!breseq_annotated$position%in%sites_to_remove,]
 dim(breseq_annotated)
 
-# --- Function: Reformat Frameshift Mutations ----
-#' @title Reformat Frameshift Mutations
-#' @description Reformats frameshift mutations to be consistent with point mutations.
-#' @param breseq_annotated Data frame. Contains the annotated breseq data.
-#' @return Data frame with reformatted frameshift mutations.
+# --- Reformat Frameshift Mutations ----
 
 ## Reformat frameshift mutations to be consistent with point mutations
 for (i in seq(1,nrow(breseq_annotated))){
@@ -129,23 +119,14 @@ for (i in seq(1,nrow(breseq_annotated))){
 breseq_annotated$position<-as.numeric(breseq_annotated$position)
 
 
-# --- Function: Reformat Gene Column ----
-#' @title Reformat Gene Column
-#' @description Reformats the gene column to remove direction.
-#' @param breseq_annotated Data frame. Contains the annotated breseq data.
-#' @return Data frame with reformatted gene column.
+# --- Reformat Gene Column ----
 
 ## Reformat gene column to remove direction
 for (i in seq(1,nrow(breseq_annotated))){
   breseq_annotated[i,"gene_2"]<-substr(breseq_annotated[i,"gene"],1,nchar(breseq_annotated[i,"gene"])-2)
 }
 
-# --- Function: Filter Mutations with Sliding Window ----
-#' @title Filter Mutations with Sliding Window
-#' @description Filters mutations using a 50 bp sliding window within each line/timepoint.
-#' @param breseq_annotated Data frame. Contains the annotated breseq data.
-#' @param N Numeric. Maximum number of neighbors allowed within the sliding window.
-#' @return Data frame with filtered mutations.
+# --- Filter Mutations with Sliding Window ----
 
 # Scan a 50 bp sliding window within each line/timepoint. If a mutation has more than N neighbors (including repeat calls at the same position), remove it.
 breseq_annotated_filtered<-data.frame()
@@ -179,6 +160,7 @@ for (sample in unique(breseq_annotated$Sample)){
   post_filter<-breseq_annotated[breseq_annotated$Sample==sample & !breseq_annotated$position%in%sites_to_remove,]
   breseq_annotated_filtered<-rbind(breseq_annotated_filtered,post_filter)
 }
+
 # Print the dimensions of the filtered data
 dim(breseq_annotated_filtered)
 

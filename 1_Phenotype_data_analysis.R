@@ -12,7 +12,8 @@
 
 #TODO: Creo que faltaría la descripción del script.
 
-#TODO: Propuesta de incluir un ambiente de paqueterías
+#TODO: Una sugerencia sería crear un proyecto de R para que se ajusten automaticamente el working directory
+#TODO: También, en el espiritu de la reproducibilidad, hay un paquete que se llama renv que guarda un ambiente con los paquetes que se utilizan dentro del proyecto (https://rstudio.github.io/renv/articles/renv.html). Segun entiendo empiezas con un ambiente vacío y jala los paquetes que ya tienes instalados al ambiente pero guarda todas las versiones (incluso me parece que la de R también).
 
 # To enhance reproducibility we set up an environment for the following project.
 # --- set environment ---
@@ -23,6 +24,7 @@ library(renv)
 
 # To ensure you have the proper versions and packages needed for this project run the following command.
 renv::restore()
+
 
 # --- packages ----
 library(growthrates)
@@ -88,54 +90,87 @@ GC_long_to_growthrates<-function(GC_long,lower,upper,p){
 
 ## ----- Figure 1: Resistance is costly -------
 
-#TODO: Una sugerencia sería crear un proyecto de R para que se ajusten automaticamente el working directory
-#TODO: También, en el espiritu de la reproducibilidad, hay un paquete que se llama renv que guarda un ambiente con los paquetes que se utilizan dentro del proyecto (https://rstudio.github.io/renv/articles/renv.html). Segun entiendo empiezas con un ambiente vacío y jala los paquetes que ya tienes instalados al ambiente pero guarda todas las versiones (incluso me parece que la de R también).
-
 ### Read in "Costs_of_Res.xlsx" as costs_of_res
 costs_of_res <- read_excel("Costs_of_Res.xlsx")
+
 
 ### Calculate fitted values controlling for phage resistance and plate layout
 ### Express fitted values as a percentage of wild-type fitness
 costs_of_res$fitted<-fitted.values(lm(r~(Population=="ancDC3000")+Column+Plate,costs_of_res))
 costs_of_res$fitted_percWT<-costs_of_res$fitted/mean(unlist(costs_of_res[costs_of_res$Population=="ancDC3000","fitted"]))*100
 
+#TODO: ¿Esta bien que algunos genes tengan valores faltantes?
+table(costs_of_res$Gene)
+
+
 ### Reorder the isolates by resistance gene and growth rate
 costs_of_res<-costs_of_res[order(costs_of_res$Gene,-costs_of_res$r),]
+
 costs_of_res[costs_of_res$Population=="MS15","Gene"]="Z" # place the isolate with no detected genetic differences on the right-hand side of the graph
 costs_of_res[costs_of_res$Population=="MS15","Annotation"]="Z" # place the isolate with no detected genetic differences on the right-hand side of the graph
+
 costs_of_res$order<-seq(1,nrow(costs_of_res))
 
 ### Resistant bacteria grow more slowly than their sensitive ancestor
 costs_of_res_R<-costs_of_res[costs_of_res$Population!="ancDC3000",]
+
 costs_agg<-aggregate(costs_of_res_R$fitted_percWT,by=list(costs_of_res_R$Population,costs_of_res_R$Gene),FUN=mean)
+
 colnames(costs_agg)<-c("Population","Gene","fitted_percWT")
 t.test(x = costs_agg$fitted_percWT,mu = 100,alternative = "less")
+
 ### Variation in growth rates is not explained by resistance gene (exclude population with no detected mutations)
 anova(lm(fitted_percWT~Gene,costs_agg[costs_agg$Population!="MS15",]))
 
 ### Code for Figure 1B
 
-#TODO: Los titulos no estan bien puestos... no me sale que estén en la parte de abajo y además estén afuera. Encontré este paquete que expande las caracteristicas de facet_grid y facet_wrap con el que posiblemente podríamos hacerlo https://cran.r-project.org/web/packages/ggh4x/vignettes/Facets.html
+#TODO: Los titulos no estan bien puestos. Les faltaba color y quitar el último.
+
+library(ggh4x) # para ponerle color a los titulos
+library(RColorBrewer)
+
+# Asignar colores a los titulos de los facets
+strip <- strip_themed(text_x = elem_list_text(color = brewer.pal(5, "Dark2")))
+
 
 #TODO: faltan los titulos y los ticks del eje x en un angulo de 90.
 
-ggplot(costs_of_res[costs_of_res$Population!="ancDC3000",])+
-  stat_summary(aes(reorder(Population,-fitted_percWT),fitted_percWT,group=Population,fill=Gene),geom="pointrange",shape=21,size=0.8)+
+# Guardar las etiquetas que van en los títulos de los facets
+strip_label <- distinct(costs_of_res[,c("Gene","Annotation")])[-c(1:2),] %>% mutate(label = paste(Gene,Annotation, sep = "\n"))
+
+
+costs_of_res[costs_of_res$Population!="ancDC3000",] %>% 
+  mutate(Population = ifelse(Population == "MS15","no detected\nmutation",Population),
+         Gene = ifelse(Gene == "Z","",Gene),
+         Annotation = ifelse(Annotation == "Z","",Annotation),
+         label = paste(Gene,Annotation, sep = "\n")) %>% 
+  mutate(label = factor(label, levels = c(strip_label$label,"\n"))) %>% 
+ggplot()+
+  stat_summary(aes(x = reorder(Population,-fitted_percWT),
+                   y = fitted_percWT,
+                   group=Population,
+                   fill=Gene),
+               geom="pointrange",
+               shape=21,
+               size=0.8)+
   geom_hline(yintercept=100,linetype="dashed")+
   scale_fill_brewer(palette="Dark2")+
   guides(fill=F)+
   ylab("Fitness (% of wild-type)")+
-  facet_grid(~paste(Gene,Annotation,sep="\n"),
+  facet_wrap2(~label,
              scales="free_x",
-             space="free_x", 
-             #strip.position = "bottom"
+             #space="free_x", 
+             strip.position = "bottom",
+             nrow = 1,
+             strip = strip
              )+
   theme_classic(base_size=18)+
   theme(axis.title.x=element_blank(),
                 axis.text.x=element_text(angle = 90),
                 #axis.ticks.x=element_blank(),
         strip.background = element_blank(),
-        strip.placement = "outside")
+        strip.placement = "outside",
+        strip.text = element_text(size = 12))
 
 
 ## ------- Figure 2A: Growth over time ---------
@@ -154,13 +189,34 @@ for (passage in seq(0,12,2)){
 }
 
 ### Code for Figure 2A
-df<-data.frame(aggregate(unlist(fitness_over_time[fitness_over_time$Type=="PR","fitted_percWT"]),by=list(unlist(fitness_over_time[fitness_over_time$Type=="PR","Passage"])),FUN=mean),aggregate(unlist(fitness_over_time[fitness_over_time$Type=="PR","fitted_percWT"]),by=list(unlist(fitness_over_time[fitness_over_time$Type=="PR","Passage"])),FUN=sd)[,2])
+
+df<-data.frame(
+  aggregate(unlist(fitness_over_time[fitness_over_time$Type=="PR","fitted_percWT"]),
+            by=list(unlist(fitness_over_time[fitness_over_time$Type=="PR","Passage"])),FUN=mean),
+  aggregate(unlist(fitness_over_time[fitness_over_time$Type=="PR","fitted_percWT"]),
+            by=list(unlist(fitness_over_time[fitness_over_time$Type=="PR","Passage"])),FUN=sd)[,2])
+
 colnames(df)=c("passage","mean","SD")
-ggplot()+geom_point(data=df,aes(x=passage*3,y=mean),size=3)+geom_errorbar(data=df,aes(x=passage*3,ymin=mean-SD,ymax=mean+SD),width=0,size=1)+geom_line(data=df,aes(x=passage*3,y=mean))+theme_classic(base_size=16)+geom_hline(yintercept=100,linetype="dashed")+scale_x_continuous(breaks=seq(0,36,6))+ylab("Fitness (% of wild-type)")+xlab("Day of experimental evolution")+coord_cartesian(ylim=c(60,115))
+
+#TODO: Faltaban las lineas de atrás
+
+ggplot()+
+  geom_point(data=df,aes(x=passage*3,y=mean),size=3)+
+  geom_errorbar(data=df,aes(x=passage*3,ymin=mean-SD,ymax=mean+SD),width=0,linewidth=1)+
+  geom_line(data=df,aes(x=passage*3,y=mean))+
+  geom_line(data = fitness_over_time, aes(x = Passage*3, y = fitted_percWT, group = Population), linewidth = 0.2, alpha = 0.4)+
+  theme_classic(base_size=16)+
+  geom_hline(yintercept=100,linetype="dashed")+
+  scale_x_continuous(breaks=seq(0,36,6))+
+  ylab("Fitness (% of wild-type)")+
+  xlab("Day of experimental evolution")+
+  coord_cartesian(ylim=c(60,115))
 
 
 ## ------ Figure 2B: Resistance over time -------
-### Read in "Resistance_over_Time.xlsx" as res_over_time
+
+#TODO: Read in "Resistance_over_Time.xlsx" as res_over_time
+res_over_time <- read_excel("Resistance_over_Time.xlsx")
 res_long<-melt(res_over_time,id.vars = "isolate",measure.vars = c("Prop_S_P0","Prop_S_P4","Prop_S_P8","Prop_S_P12"))
 res_long$variable<-as.character(res_long$variable)
 res_long$passage<-as.numeric(substr(res_long$variable,9,nchar(res_long$variable)))
@@ -184,9 +240,22 @@ LOR_res_long$passage <- as.numeric(substr(LOR_res_long$variable,9,nchar(LOR_res_
 LOR_res_long <- LOR_res_long[!LOR_res_long$isolate %in% c("FMS6","SNK6"),]  # Insulation filtering
 
 ### Excludes populations with colonies that appeared sensitive on plates but were not affected by phage in growth curves
-ggplot(LOR_res_long[!LOR_res_long$isolate%in%c("FMS6","SNK6"),],aes(passage*3,value*100,group=isolate,color=(isolate%in%c("SNK7","QAC5","VCM4"))))+geom_point(size=4.5,shape=18)+geom_line(size=0.8)+theme_classic()+guides(color=F)+scale_color_brewer(palette="Dark2")+scale_x_continuous(breaks=c(0,12,24,36))+theme_classic(base_size=16)+ylab("Proportion of phage sensitivity in population (%)")+xlab("Day of experimental evolution")+theme(axis.title.y=element_text(size=14))
+ggplot(LOR_res_long[!LOR_res_long$isolate%in%c("FMS6","SNK6"),],
+       aes(x = passage*3,
+           y = value*100,
+           group=isolate,
+           color=(isolate%in%c("SNK7","QAC5","VCM4"))))+
+  geom_point(size=4.5,shape=18)+geom_line(size=0.8)+
+  theme_classic()+
+  guides(color=F)+
+  scale_color_brewer(palette="Dark2")+
+  scale_x_continuous(breaks=c(0,12,24,36))+
+  theme_classic(base_size=16)+ylab("Proportion of phage sensitivity in population (%)")+
+  xlab("Day of experimental evolution")+
+  theme(axis.title.y=element_text(size=14))
 
 ## ----- Figure 3: Replay experiment -------
+
 ### Read in "Replay.xlsx" as replay
 replay <- read_excel("Replay.xlsx", sheet = "Data")
 replay$Prop_S_P12 <- as.numeric(as.character(replay$Prop_S_P12)) # Convert as numeric
@@ -194,9 +263,39 @@ replay$Prop_S_P12 <- as.numeric(as.character(replay$Prop_S_P12)) # Convert as nu
 t.test(Prop_S_P12~Founder_outcome,data=replay)
 
 ### Code for Figure 3C
-agg<-data.frame(aggregate(100*replay$Prop_S_P12,by=list(replay$Founder_outcome),FUN=function(x){mean(x,na.rm=T)}),aggregate(100*replay$Prop_S_P12,by=list(replay$Founder_outcome),FUN=function(x){sd(x,na.rm=T)/sqrt(length(x))}))
+agg<-data.frame(aggregate(100*replay$Prop_S_P12,
+                          by=list(replay$Founder_outcome),
+                          FUN=function(x){mean(x,na.rm=T)}),
+                aggregate(100*replay$Prop_S_P12,
+                          by=list(replay$Founder_outcome),
+                          FUN=function(x){sd(x,na.rm=T)/sqrt(length(x))}))
+
 colnames(agg)=c("Founder_outcome","mean","Founder_2","SE")
-ggplot()+geom_errorbar(data=agg,aes(Founder_outcome,ymax=mean+SE,ymin=mean-SE),alpha=0.4,width=0.6,size=0.8)+stat_summary(data=agg,aes(Founder_outcome,mean,fill=Founder_outcome),geom="bar",fun=mean,width=0.8,color="black")+geom_jitter(data=replay,aes(Founder_outcome,Prop_S_P12*100),size=3,alpha=0.4,width=0.05,height=1)+theme_classic(base_size=16)+scale_fill_brewer(palette="Dark2")+guides(fill=F)+xlab("")+ylab("Proportion of phage sensitivity in replay populations (%)")+theme(axis.text.x=element_blank())
+
+ggplot()+
+  geom_errorbar(data=agg,
+                aes(Founder_outcome,ymax=mean+SE,ymin=mean-SE),
+                alpha=0.4,
+                width=0.6,
+                size=0.8)+
+  stat_summary(data=agg,
+               aes(Founder_outcome,mean,fill=Founder_outcome),
+               geom="bar",
+               fun=mean,
+               width=0.8,
+               color="black")+
+  geom_jitter(data=replay,
+              aes(Founder_outcome,Prop_S_P12*100),
+              size=3,
+              alpha=0.4,
+              width=0.05,
+              height=1)+
+  theme_classic(base_size=16)+
+  scale_fill_brewer(palette="Dark2")+
+  scale_x_discrete(labels = c("R" = "Remained\nphage-resistant","S"="Re-evolved\nphage sensitivity"))+
+  guides(fill=F)+
+  xlab("Outcome of founder population")+
+  ylab("Proportion of phage sensitivity in replay populations (%)")
 
 
 ### supplement
