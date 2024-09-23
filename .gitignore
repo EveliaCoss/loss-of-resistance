@@ -3,6 +3,3 @@
 .RData
 .Ruserdata
 
-## Carpeta de renv
-renv/
-renv.lock
