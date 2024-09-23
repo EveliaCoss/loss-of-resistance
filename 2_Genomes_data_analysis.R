@@ -364,7 +364,7 @@ for (i in seq(1,10000)){
 ### p-value (proportion of permutations more extreme than observed value)
 print(length(perm_gene_P2[perm_gene_P2>=test_gene_P2])/length(perm_gene_P2))
 
-#--- Modified for added value p----
+#--- Modified to add value p----
 
 # Prepare data
 test_gene_df <- data.frame(
