@@ -216,48 +216,48 @@ sim_coef_NS_noP0[!is.na(sim_coef_NS_noP0$gene1) & !is.na(sim_coef_NS_noP0$gene2)
 
 ##--- Randomization test (Day 6)---- 
 ### Construct test statistic
-tmp<-sim_coef_NS_noP0[sim_coef_NS_noP0$passage1=="P2" & sim_coef_NS_noP0$passage2=="P2" & !is.na(sim_coef_NS_noP0$gene1) & !is.na(sim_coef_NS_noP0$gene2),]
-test_same_P2<-tmp[tmp$same_gene=="same","sim_coef"]
-test_diff_P2<-tmp[tmp$same_gene=="different","sim_coef"]
-test_gene_P2<-mean(test_same_P2)-mean(test_diff_P2)
+tmp_day6 <- sim_coef_NS_noP0[sim_coef_NS_noP0$passage1 == "P2" & sim_coef_NS_noP0$passage2 == "P2" & !is.na(sim_coef_NS_noP0$gene1) & !is.na(sim_coef_NS_noP0$gene2),]
+test_same_P2_day6 <- tmp_day6[tmp_day6$same_gene == "same", "sim_coef"]
+test_diff_P2_day6 <- tmp_day6[tmp_day6$same_gene == "different", "sim_coef"]
+test_gene_P2_day6 <- mean(test_same_P2_day6) - mean(test_diff_P2_day6)
 
 ### Randomization & resampling
-perm_gene_P2<-c()
+perm_gene_P2_day6 <- c()
 set.seed(123)
-for (i in seq(1,10000)){
-  tmp$same_gene<-sample(tmp$same_gene,replace=F)
-  perm_same_P2<-mean(tmp[tmp$same_gene=="same","sim_coef"])
-  perm_diff_P2<-mean(tmp[tmp$same_gene=="different","sim_coef"])
-  perm_gene_P2<-c(perm_gene_P2,perm_same_P2-perm_diff_P2)
+for (i in seq(1, 10000)) {
+  tmp_day6$same_gene <- sample(tmp_day6$same_gene, replace = F)
+  perm_same_P2 <- mean(tmp_day6[tmp_day6$same_gene == "same", "sim_coef"])
+  perm_diff_P2 <- mean(tmp_day6[tmp_day6$same_gene == "different", "sim_coef"])
+  perm_gene_P2_day6 <- c(perm_gene_P2_day6, perm_same_P2 - perm_diff_P2)
 }
 
 ### p-value (proportion of permutations more extreme than observed value)
-print(length(perm_gene_P2[perm_gene_P2>=test_gene_P2])/length(perm_gene_P2))
+print(length(perm_gene_P2_day6[perm_gene_P2_day6 >= test_gene_P2_day6]) / length(perm_gene_P2_day6))
 
 #--- Modified for added value p----
 
 # Prepare data
-test_gene_df <- data.frame(
-  sim_coef = c(test_same_P2, test_diff_P2),
-  label = c(rep("Same\nresistance\ngene", length(test_same_P2)), rep("Different\nresistance\ngene", length(test_diff_P2)))
+test_gene_df_day6 <- data.frame(
+  sim_coef = c(test_same_P2_day6, test_diff_P2_day6),
+  label = c(rep("Same\nresistance\ngene", length(test_same_P2_day6)), rep("Different\nresistance\ngene", length(test_diff_P2_day6)))
 )
-colnames(test_gene_df) <- c("sim_coef", "label")
-test_gene_df$label <- factor(test_gene_df$label, levels = c("Same\nresistance\ngene", "Different\nresistance\ngene"))
+colnames(test_gene_df_day6) <- c("sim_coef", "label")
+test_gene_df_day6$label <- factor(test_gene_df_day6$label, levels = c("Same\nresistance\ngene", "Different\nresistance\ngene"))
 
 # Calculate day 6 p-value
-p_value_P2 <- length(perm_gene_P2[perm_gene_P2 >= test_gene_P2]) / length(perm_gene_P2)
-print(p_value_P2)
+p_value_P2_day6 <- length(perm_gene_P2_day6[perm_gene_P2_day6 >= test_gene_P2_day6]) / length(perm_gene_P2_day6)
+print(p_value_P2_day6)
 
-# Set up p-value annotationn
-if (p_value_P2 < 0.001) {
-  annotation <- "p < 0.001***"
+# Set up p-value annotation
+if (p_value_P2_day6 < 0.001) {
+  annotation_day6 <- "p < 0.001***"
 } else {
-  annotation <- paste0("p = ", format(p_value_P2, digits = 3))
+  annotation_day6 <- paste0("p = ", format(p_value_P2_day6, digits = 3))
 }
 
 #--- Fig. 4A ---- 
 # Creation and display of the graph
-p <- ggplot(test_gene_df, aes(label, sim_coef)) +
+p_day6 <- ggplot(test_gene_df_day6, aes(label, sim_coef)) +
   geom_boxplot(outlier.shape = NA, width = 0.4, size = 0.8) +
   geom_jitter(width = 0.05, size = 2, alpha = 0.2) +
   theme_classic(base_size = 18) +
@@ -266,19 +266,19 @@ p <- ggplot(test_gene_df, aes(label, sim_coef)) +
   theme(panel.spacing = unit(3, "lines"),
         strip.text = element_text(size = 18, face = "bold")) +
   ylim(0.1, 0.55) +
-  annotate("text", x = 1.5, y = 0.55, label = annotation, size = 6, hjust = 0.5, vjust = 1.5, color = "black")
+  annotate("text", x = 1.5, y = 0.55, label = annotation_day6, size = 6, hjust = 0.5, vjust = 1.5, color = "black")
 
-print(p)
+print(p_day6)
 
-#--- Fig.4B ---- 
+#--- Fig. 4B ---- 
 ## Identify which genes were mutated in which populations
-top_genes_in_study<-data.frame(table(breseq_NS_noP0[breseq_NS_noP0$Passage=="P2","description"],breseq_NS_noP0[breseq_NS_noP0$Passage=="P2","Line"]))
-colnames(top_genes_in_study)=c("description","Line","hits")
-top_genes<-names(tail(sort(table(top_genes_in_study[top_genes_in_study$hits>0,"description"])),20))
+top_genes_in_study_day6 <- data.frame(table(breseq_NS_noP0[breseq_NS_noP0$Passage == "P2", "description"], breseq_NS_noP0[breseq_NS_noP0$Passage == "P2", "Line"]))
+colnames(top_genes_in_study_day6) <- c("description", "Line", "hits")
+top_genes_day6 <- names(tail(sort(table(top_genes_in_study_day6[top_genes_in_study_day6$hits > 0, "description"])), 20))
 
 ### Construct a data frame of mutations that appeared by Day 6, excluding phage resistance mutations or any other mutations fixed before the start of the experiment
-breseq_gene_analysis<-data.frame(table(breseq_NS_noP0[breseq_NS_noP0$Passage=="P2","description"],breseq_NS_noP0[breseq_NS_noP0$Passage=="P2","Line"]))
-colnames(breseq_gene_analysis)=c("gene","Line","hits")
+breseq_gene_analysis_day6 <- data.frame(table(breseq_NS_noP0[breseq_NS_noP0$Passage == "P2", "description"], breseq_NS_noP0[breseq_NS_noP0$Passage == "P2", "Line"]))
+colnames(breseq_gene_analysis_day6) <- c("gene", "Line", "hits")
 
 # Define the vectors or lists of values corresponding to each resistance gene
 rfbA <- c("FMS6", "VCM4", "MS2", "FMS4", "MS10", "QAC4")  
@@ -286,49 +286,49 @@ glycosyl <- c("VCM19", "MS12", "FMS13", "SNK12", "QAC3", "SNK11", "VCM17", "SNK6
 glycoside <- c("SNK7", "FMS11", "FMS12", "FMS9", "FMS16")  
 
 ### Annotate each population by its resistance gene
-breseq_gene_analysis[breseq_gene_analysis$Line %in% rfbA, "res_gene"] <- "rfbA"
-breseq_gene_analysis[breseq_gene_analysis$Line %in% glycosyl, "res_gene"] <- "glycosyl"
-breseq_gene_analysis[breseq_gene_analysis$Line %in% glycoside, "res_gene"] <- "glycoside"
+breseq_gene_analysis_day6[breseq_gene_analysis_day6$Line %in% rfbA, "res_gene"] <- "rfbA"
+breseq_gene_analysis_day6[breseq_gene_analysis_day6$Line %in% glycosyl, "res_gene"] <- "glycosyl"
+breseq_gene_analysis_day6[breseq_gene_analysis_day6$Line %in% glycoside, "res_gene"] <- "glycoside"
 
 # Remove rows where res_gene is NA
-breseq_gene_analysis <- breseq_gene_analysis[!is.na(breseq_gene_analysis$res_gene), ]
+breseq_gene_analysis_day6 <- breseq_gene_analysis_day6[!is.na(breseq_gene_analysis_day6$res_gene), ]
 
 ### Calculate the percentage of populations with each resistance gene that mutated in each of the other genes
-breseq_gene_props <- data.frame(matrix(nrow = 0, ncol = 3))
+breseq_gene_props_day6 <- data.frame(matrix(nrow = 0, ncol = 3))
 l <- list(rfbA, glycosyl, glycoside)
 names(l) <- c("rfbA mutants", "PSPTO_4988 mutants", "PSPTO_4991 mutants")
 
 # Loop through genes and calculate mutation proportions
-for (gene in top_genes) {
+for (gene in top_genes_day6) {
   for (j in seq_along(l)) {
     res_gene <- l[[j]]
-    prop <- nrow(breseq_gene_analysis[breseq_gene_analysis$Line %in% res_gene & 
-                                        breseq_gene_analysis$gene == gene & 
-                                        breseq_gene_analysis$hits > 0, ]) / 
-      nrow(breseq_gene_analysis[breseq_gene_analysis$Line %in% res_gene & 
-                                  breseq_gene_analysis$gene == gene, ])
-    breseq_gene_props <- rbind(breseq_gene_props, c(gene, names(l)[j], prop))
+    prop <- nrow(breseq_gene_analysis_day6[breseq_gene_analysis_day6$Line %in% res_gene & 
+                                             breseq_gene_analysis_day6$gene == gene & 
+                                             breseq_gene_analysis_day6$hits > 0, ]) / 
+      nrow(breseq_gene_analysis_day6[breseq_gene_analysis_day6$Line %in% res_gene & 
+                                       breseq_gene_analysis_day6$gene == gene, ])
+    breseq_gene_props_day6 <- rbind(breseq_gene_props_day6, c(gene, names(l)[j], prop))
   }
 }
 
 # Sort the 'res_gene' column so that "rfbA mutants" appears first, followed by "PSPTO_4988 mutants" and then "PSPTO_4991 mutants"
-colnames(breseq_gene_props)
-colnames(breseq_gene_props) <- c("top_gene", "res_gene", "percent_pops")
-breseq_gene_props$res_gene <- factor(breseq_gene_props$res_gene, levels = c("PSPTO_4991 mutants","PSPTO_4988 mutants","rfbA mutants"))
+colnames(breseq_gene_props_day6)
+colnames(breseq_gene_props_day6) <- c("top_gene", "res_gene", "percent_pops")
+breseq_gene_props_day6$res_gene <- factor(breseq_gene_props_day6$res_gene, levels = c("PSPTO_4991 mutants", "PSPTO_4988 mutants", "rfbA mutants"))
 
 # Assign column names
-colnames(breseq_gene_props) <- c("top_gene", "res_gene", "percent_pops")
-breseq_gene_props$percent_pops <- as.numeric(breseq_gene_props$percent_pops)
-breseq_gene_props[breseq_gene_props$percent_pops == 0, "percent_pops"] <- 10^-4
+colnames(breseq_gene_props_day6) <- c("top_gene", "res_gene", "percent_pops")
+breseq_gene_props_day6$percent_pops <- as.numeric(breseq_gene_props_day6$percent_pops)
+breseq_gene_props_day6[breseq_gene_props_day6$percent_pops == 0, "percent_pops"] <- 10^-4
 
 # Replace problematic hyphens and ensure proper encoding
-breseq_gene_props$top_gene <- gsub("‑", "-", breseq_gene_props$top_gene)  
+breseq_gene_props_day6$top_gene <- gsub("‑", "-", breseq_gene_props_day6$top_gene)  
 
 # Maintain the order of factors on the X-axis
-breseq_gene_props$top_gene <- factor(breseq_gene_props$top_gene, levels = rev(unique(breseq_gene_props$top_gene)))
+breseq_gene_props_day6$top_gene <- factor(breseq_gene_props_day6$top_gene, levels = rev(unique(breseq_gene_props_day6$top_gene)))
 
 #--- Plot Fig 4B---- 
-ggplot(breseq_gene_props, aes(top_gene, res_gene, fill = percent_pops * 100)) +
+ggplot(breseq_gene_props_day6, aes(top_gene, res_gene, fill = percent_pops * 100)) +
   geom_tile(color = "grey80") +
   theme_classic(base_size = 14) +
   theme(
@@ -342,127 +342,121 @@ ggplot(breseq_gene_props, aes(top_gene, res_gene, fill = percent_pops * 100)) +
   ylab("") +
   xlab("") +
   ggtitle("Day 6 of experimental evolution")
-
-
+    
 ##--- Randomization Test (Day 36)----
 # Construction of the Test Statistic
-  tmp2 <- sim_coef_NS_noP0[sim_coef_NS_noP0$passage1 == "P12" & 
-                             sim_coef_NS_noP0$passage2 == "P12" & 
-                             !is.na(sim_coef_NS_noP0$gene1) & 
-                             !is.na(sim_coef_NS_noP0$gene2), ]
+tmp2_day36 <- sim_coef_NS_noP0[sim_coef_NS_noP0$passage1 == "P12" & sim_coef_NS_noP0$passage2 == "P12" & !is.na(sim_coef_NS_noP0$gene1) & !is.na(sim_coef_NS_noP0$gene2), ]
+    
+test_same_P12_day36 <- tmp2_day36[tmp2_day36$same_gene == "same", "sim_coef"]
+test_diff_P12_day36 <- tmp2_day36[tmp2_day36$same_gene == "different", "sim_coef"]
+test_gene_P12_day36 <- mean(test_same_P12_day36) - mean(test_diff_P12_day36)
+    
+# Randomization and Resampling
+perm_gene_P12_day36 <- c()
+set.seed(123)
+for (i in seq(1, 10000)) {
+tmp2_day36$same_gene <- sample(tmp2_day36$same_gene, replace = FALSE)
+perm_same_P12_day36 <- mean(tmp2_day36[tmp2_day36$same_gene == "same", "sim_coef"])
+perm_diff_P12_day36 <- mean(tmp2_day36[tmp2_day36$same_gene == "different", "sim_coef"])
+perm_gene_P12_day36 <- c(perm_gene_P12_day36, perm_same_P12_day36 - perm_diff_P12_day36)
+    }
+    
+# P-value (proportion of permutations more extreme than the observed value)
+p_value_P12_day36 <- length(perm_gene_P12_day36[perm_gene_P12_day36 >= test_gene_P12_day36]) / length(perm_gene_P12_day36)
+print(p_value_P12_day36)
+    
+# Preparing Data for Visualization
+test_gene_df_day36 <- data.frame(
+sim_coef = c(test_same_P12_day36, test_diff_P12_day36),
+label = c(rep("Same\nresistance\ngene", length(test_same_P12_day36)), rep("Different\nresistance\ngene", length(test_diff_P12_day36)))
+)
+colnames(test_gene_df_day36) <- c("sim_coef", "label")
+test_gene_df_day36$label <- factor(test_gene_df_day36$label, levels = c("Same\nresistance\ngene", "Different\nresistance\ngene"))
   
-  test_same_P12 <- tmp2[tmp2$same_gene == "same", "sim_coef"]
-  test_diff_P12 <- tmp2[tmp2$same_gene == "different", "sim_coef"]
-  test_gene_P12 <- mean(test_same_P12) - mean(test_diff_P12)
-  
-  # Randomization and Resampling
-  perm_gene_P12 <- c()
-  set.seed(123)
-  for (i in seq(1, 10000)) {
-    tmp2$same_gene <- sample(tmp2$same_gene, replace = FALSE)
-    perm_same_P12 <- mean(tmp2[tmp2$same_gene == "same", "sim_coef"])
-    perm_diff_P12 <- mean(tmp2[tmp2$same_gene == "different", "sim_coef"])
-    perm_gene_P12 <- c(perm_gene_P12, perm_same_P12 - perm_diff_P12)
-  }
-  
-  # P-value (proportion of permutations more extreme than the observed value)
-  p_value_P12 <- length(perm_gene_P12[perm_gene_P12 >= test_gene_P12]) / length(perm_gene_P12)
-  print(p_value_P12)
-  
-  # Preparing Data for Visualization
-  test_gene_df <- data.frame(
-    sim_coef = c(test_same_P12, test_diff_P12),
-    label = c(rep("Same\nresistance\ngene", length(test_same_P12)), rep("Different\nresistance\ngene", length(test_diff_P12)))
-  )
-  colnames(test_gene_df) <- c("sim_coef", "label")
-  test_gene_df$label <- factor(test_gene_df$label, levels = c("Same\nresistance\ngene", "Different\nresistance\ngene"))
-  
-  #--- Fig 5A ---- 
-  #Creating and visualizing the plot without p-value annotation
-  p <- ggplot(test_gene_df, aes(label, sim_coef)) +
-    geom_boxplot(outlier.shape = NA, width = 0.4, size = 0.8) +
-    geom_jitter(width = 0.05, size = 2, alpha = 0.2) +
-    theme_classic(base_size = 18) +
-    xlab("") +
-    ylab("Overlap in acquired mutations\n(Paired Sørensen-Dice similarity)") +
-    theme(panel.spacing = unit(3, "lines"),
-          strip.text = element_text(size = 18, face = "bold")) +
-    ylim(0.1, 0.55)
-  
-  print(p)
-
-
+#--- Fig 5A ---- 
+#Creating and visualizing the plot without p-value annotation
+p_day36 <- ggplot(test_gene_df_day36, aes(label, sim_coef)) +
+geom_boxplot(outlier.shape = NA, width = 0.4, size = 0.8) +
+geom_jitter(width = 0.05, size = 2, alpha = 0.2) +
+theme_classic(base_size = 18) +
+xlab("") +
+ylab("Overlap in acquired mutations\n(Paired Sørensen-Dice similarity)") +
+theme(panel.spacing = unit(3, "lines"),
+strip.text = element_text(size = 18, face = "bold")) +
+ylim(0.1, 0.55)
+    
+print(p_day36)
+    
 ## Identifying which genes mutated in which populations
 # Assuming 'breseq_NS_noP0' is loaded in the environment
-  
-top_genes_in_study2 <- data.frame(table(breseq_NS_noP0[breseq_NS_noP0$Passage=="P12", "description"], breseq_NS_noP0[breseq_NS_noP0$Passage=="P12", "Line"]))
-colnames(top_genes_in_study2) <- c("description", "Line", "hits")
-top_genes <- names(tail(sort(table(top_genes_in_study2[top_genes_in_study2$hits > 0, "description"])), 20))
-
+    
+top_genes_in_study2_day36 <- data.frame(table(breseq_NS_noP0[breseq_NS_noP0$Passage=="P12", "description"], breseq_NS_noP0[breseq_NS_noP0$Passage=="P12", "Line"]))
+colnames(top_genes_in_study2_day36) <- c("description", "Line", "hits")
+top_genes_day36 <- names(tail(sort(table(top_genes_in_study2_day36[top_genes_in_study2_day36$hits > 0, "description"])), 20))
+    
 ### Constructing a gene analysis table for P12
-breseq_gene_analysis2 <- data.frame(table(breseq_NS_noP0[breseq_NS_noP0$Passage=="P12", "description"], breseq_NS_noP0[breseq_NS_noP0$Passage=="P12", "Line"]))
-colnames(breseq_gene_analysis2) <- c("gene", "Line", "hits")
-
+breseq_gene_analysis2_day36 <- data.frame(table(breseq_NS_noP0[breseq_NS_noP0$Passage=="P12", "description"], breseq_NS_noP0[breseq_NS_noP0$Passage=="P12", "Line"]))
+colnames(breseq_gene_analysis2_day36) <- c("gene", "Line", "hits")
+    
 # Define the resistance gene vectors
 rfbA <- c("FMS6", "VCM4", "MS2", "FMS4", "MS10", "QAC4")  
 glycosyl <- c("VCM19", "MS12", "FMS13", "SNK12", "QAC3", "SNK11", "VCM17", "SNK6", "MS1")  
 glycoside <- c("SNK7", "FMS11", "FMS12", "FMS9", "FMS16")  
-
+    
 # Annotate each population according to its resistance gene
-breseq_gene_analysis2[breseq_gene_analysis2$Line %in% rfbA, "res_gene"] <- "rfbA"
-breseq_gene_analysis2[breseq_gene_analysis2$Line %in% glycosyl, "res_gene"] <- "glycosyl"
-breseq_gene_analysis2[breseq_gene_analysis2$Line %in% glycoside, "res_gene"] <- "glycoside"
-
+breseq_gene_analysis2_day36[breseq_gene_analysis2_day36$Line %in% rfbA, "res_gene"] <- "rfbA"
+breseq_gene_analysis2_day36[breseq_gene_analysis2_day36$Line %in% glycosyl, "res_gene"] <- "glycosyl"
+breseq_gene_analysis2_day36[breseq_gene_analysis2_day36$Line %in% glycoside, "res_gene"] <- "glycoside"
+    
 # Remove rows where res_gene is NA
-breseq_gene_analysis2 <- breseq_gene_analysis2[!is.na(breseq_gene_analysis2$res_gene), ]
-
+breseq_gene_analysis2_day36 <- breseq_gene_analysis2_day36[!is.na(breseq_gene_analysis2_day36$res_gene), ]
+    
 ### Calculate the percentage of populations with each resistance gene that mutated in each of the other genes
-breseq_gene_props <- data.frame(matrix(nrow = 0, ncol = 3))
-l <- list(rfbA = rfbA, glycosyl = glycosyl, glycoside = glycoside)
-names(l) <- c("rfbA mutants", "PSPTO_4988 mutants", "PSPTO_4991 mutants")
-
+breseq_gene_props_day36 <- data.frame(matrix(nrow = 0, ncol = 3))
+l_day36 <- list(rfbA = rfbA, glycosyl = glycosyl, glycoside = glycoside)
+names(l_day36) <- c("rfbA mutants", "PSPTO_4988 mutants", "PSPTO_4991 mutants")
+    
 # Loop through genes and calculate mutation proportions
-for (gene in top_genes) {
-  for (j in seq_along(l)) {
-    res_gene <- l[[j]]
-    prop <- nrow(breseq_gene_analysis2[breseq_gene_analysis2$Line %in% res_gene & 
-                                         breseq_gene_analysis2$gene == gene & 
-                                         breseq_gene_analysis2$hits > 0, ]) / 
-      nrow(breseq_gene_analysis2[breseq_gene_analysis2$Line %in% res_gene & 
-                                   breseq_gene_analysis2$gene == gene, ])
-    breseq_gene_props <- rbind(breseq_gene_props, c(gene, names(l)[j], prop))
-  }
-}
-
+for (gene in top_genes_day36) {
+ for (j in seq_along(l_day36)) {
+res_gene <- l_day36[[j]]
+        prop <- nrow(breseq_gene_analysis2_day36[breseq_gene_analysis2_day36$Line %in% res_gene & 
+                                                   breseq_gene_analysis2_day36$gene == gene & 
+                                                   breseq_gene_analysis2_day36$hits > 0, ]) / 
+          nrow(breseq_gene_analysis2_day36[breseq_gene_analysis2_day36$Line %in% res_gene & 
+                                             breseq_gene_analysis2_day36$gene == gene, ])
+        breseq_gene_props_day36 <- rbind(breseq_gene_props_day36, c(gene, names(l_day36)[j], prop))
+      }
+    }
+    
 # Sort the 'res_gene' column so that "rfbA mutants" appears first, followed by "PSPTO_4988 mutants" and then "PSPTO_4991 mutants"
-colnames(breseq_gene_props)
-colnames(breseq_gene_props) <- c("top_gene", "res_gene", "percent_pops")
-breseq_gene_props$res_gene <- factor(breseq_gene_props$res_gene, levels = c("PSPTO_4991 mutants", "PSPTO_4988 mutants", "rfbA mutants"))
-
+colnames(breseq_gene_props_day36)
+colnames(breseq_gene_props_day36) <- c("top_gene", "res_gene", "percent_pops")
+breseq_gene_props_day36$res_gene <- factor(breseq_gene_props_day36$res_gene, levels = c("PSPTO_4991 mutants", "PSPTO_4988 mutants", "rfbA mutants"))
+    
 # Assign column names
-colnames(breseq_gene_props) <- c("top_gene", "res_gene", "percent_pops")
-breseq_gene_props$percent_pops <- as.numeric(breseq_gene_props$percent_pops)
-breseq_gene_props[breseq_gene_props$percent_pops == 0, "percent_pops"] <- 10^-4
-
+colnames(breseq_gene_props_day36) <- c("top_gene", "res_gene", "percent_pops")
+breseq_gene_props_day36$percent_pops <- as.numeric(breseq_gene_props_day36$percent_pops)
+breseq_gene_props_day36[breseq_gene_props_day36$percent_pops == 0, "percent_pops"] <- 10^-4
+    
 # Replace problematic dashes and ensure proper encoding
-breseq_gene_props$top_gene <- gsub("‑", "-", breseq_gene_props$top_gene)
-
+breseq_gene_props_day36$top_gene <- gsub("‑", "-", breseq_gene_props_day36$top_gene)
+    
 # Maintain the order of factors on the X-axis
-breseq_gene_props$top_gene <- factor(breseq_gene_props$top_gene, levels = rev(unique(breseq_gene_props$top_gene)))
-
+breseq_gene_props_day36$top_gene <- factor(breseq_gene_props_day36$top_gene, levels = rev(unique(breseq_gene_props_day36$top_gene)))
+    
 #--- Plot Fig 5B----
-ggplot(breseq_gene_props, aes(top_gene, res_gene, fill = percent_pops * 100)) +
-  geom_tile(color = "grey80") +
-  theme_classic(base_size = 14) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 10, family = "Arial")) +
-  scale_fill_viridis(name = "Populations\nwith mutation (%)", limits = c(0, 100), breaks = c(0, 25, 50, 75, 100)) +
-  ylab("") +
-  xlab("") +
-  ggtitle("Day 36 of experimental evolution")
-
-
+    ggplot(breseq_gene_props_day36, aes(top_gene, res_gene, fill = percent_pops * 100)) +
+      geom_tile(color = "grey80") +
+      theme_classic(base_size = 14) +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 10, family = "Arial")) +
+      scale_fill_viridis(name = "Populations\nwith mutation (%)", limits = c(0, 100), breaks = c(0, 25, 50, 75, 100)) +
+      ylab("") +
+      xlab("") +
+      ggtitle("Day 36 of experimental evolution")
+    
 # Saving objects needed for the figures
-save(sim_coef_NS_noP0, p_value_P12, test_gene_df, breseq_gene_analysis2, breseq_gene_props, 
+save(p_day6, p_day36, annotation_day6, test_gene_df_day6, annotation_day6, breseq_gene_props_day6, test_gene_df_day36, breseq_gene_props_day36, 
      file = "ReproHack_data_figures.RData")
 
 
@@ -495,4 +489,4 @@ sessionInfo()
 #[16] cellranger_1.1.0  evaluate_0.24.0   munsell_0.5.1     tibble_3.2.1      fastmap_1.2.0    
 #[21] lifecycle_1.0.4   compiler_4.4.0    dplyr_1.1.4       pkgconfig_2.0.3   rstudioapi_0.16.0
 #[26] farver_2.1.2      digest_0.6.37     R6_2.5.1          tidyselect_1.2.1  utf8_1.2.4       
-#[31] pillar_1.9.0      magrittr_2.0.3    withr_3.0.1       tools_4.4.0       gtable_0.3.5     
+#[31] pillar_1.9.0      magrittr_2.0.3    withr_3.0.1       tools_4.4.0       gtable_0.3.5   
