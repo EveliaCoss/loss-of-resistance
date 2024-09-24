@@ -461,6 +461,11 @@ ggplot(breseq_gene_props, aes(top_gene, res_gene, fill = percent_pops * 100)) +
   ggtitle("Day 36 of experimental evolution")
 
 
+# Saving objects needed for the figures
+save(sim_coef_NS_noP0, p_value_P12, test_gene_df, breseq_gene_analysis2, breseq_gene_props, 
+     file = "ReproHack_data_figures.RData")
+
+
 
 sessionInfo()
 #R version 4.4.0 (2024-04-24 ucrt)
