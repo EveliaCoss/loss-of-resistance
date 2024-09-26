@@ -1,18 +1,18 @@
-# Analysis of bacterial genomes evolved in the absence of phage
-# Reena Debray
-# Feb 1, 2022
+# Title: Analysis of bacterial genomes evolved in the absence of phage
+# Author: Reena Debray
+# Date: Feb 1, 2022
 # Modified: Amairani Cancino Bello (04/Sep/2024) 
-# This script runs the ReproHack_data_figures4_5.RData variable to create the graphs.
+# Description: This script runs the ReproHack_data_figures4_5.RData file, which contains the necessary variables to create the graphs.
 
 
 #--- Packages ----
 library(ggplot2)
 library(viridis)
-# Load objects from the .RData file
-# The variable contains : 
-# Saving objects needed for the figures from 2_Genome_data_analysis.R script.
-# save(p_day6, p_day36, annotation_day6, test_gene_df_day6, annotation_day6, breseq_gene_props_day6, test_gene_df_day36, breseq_gene_props_day36, 
-#    file = "ReproHack_data_figures4_5.RData")
+# Load objects from the .RData file.
+# Save the objects needed for the figures from the 2_Genome_data_analysis.R script.
+# ReproHack_data_figures4_5.RData contains the variables:
+# p_day6, p_day36, annotation_day6, test_gene_df_day6, annotation_day6, breseq_gene_props_day6, test_gene_df_day36, and breseq_gene_props_day36.
+
 getwd()
 load("ReproHack_data_figures4_5.RData")
 
